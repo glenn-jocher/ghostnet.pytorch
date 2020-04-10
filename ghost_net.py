@@ -49,7 +49,7 @@ def depthwise_conv(inp, oup, kernel_size=3, stride=1, relu=False):
     return nn.Sequential(
         nn.Conv2d(inp, oup, kernel_size, stride, kernel_size//2, groups=inp, bias=False),
         nn.BatchNorm2d(oup),
-        nn.ReLU(inplace=True) if relu else nn.Sequential(),
+        nn.ReLU(inplace=True) if relu else nn.Identity(),
     )
 
 class GhostModule(nn.Module):
@@ -62,13 +62,13 @@ class GhostModule(nn.Module):
         self.primary_conv = nn.Sequential(
             nn.Conv2d(inp, init_channels, kernel_size, stride, kernel_size//2, bias=False),
             nn.BatchNorm2d(init_channels),
-            nn.ReLU(inplace=True) if relu else nn.Sequential(),
+            nn.ReLU(inplace=True) if relu else nn.Identity(),
         )
 
         self.cheap_operation = nn.Sequential(
             nn.Conv2d(init_channels, new_channels, dw_size, 1, dw_size//2, groups=init_channels, bias=False),
             nn.BatchNorm2d(new_channels),
-            nn.ReLU(inplace=True) if relu else nn.Sequential(),
+            nn.ReLU(inplace=True) if relu else nn.Identity(),
         )
 
     def forward(self, x):
@@ -87,9 +87,9 @@ class GhostBottleneck(nn.Module):
             # pw
             GhostModule(inp, hidden_dim, kernel_size=1, relu=True),
             # dw
-            depthwise_conv(hidden_dim, hidden_dim, kernel_size, stride, relu=False) if stride==2 else nn.Sequential(),
+            depthwise_conv(hidden_dim, hidden_dim, kernel_size, stride, relu=False) if stride==2 else nn.Identity(),
             # Squeeze-and-Excite
-            SELayer(hidden_dim) if use_se else nn.Sequential(),
+            SELayer(hidden_dim) if use_se else nn.Identity(),
             # pw-linear
             GhostModule(hidden_dim, oup, kernel_size=1, relu=False),
         )
